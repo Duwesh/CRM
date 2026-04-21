@@ -1,0 +1,6 @@
+[
+  { "id": 1, "client": "Reliance Industries Ltd.", "name": "Mukesh Ambani", "role": "CEO", "phone": "+91 98765 43210", "email": "mukesh.a@reliance.com", "isPrimary": true },
+  { "id": 2, "client": "Reliance Industries Ltd.", "name": "Alok Agarwal", "role": "CFO", "phone": "+91 98765 00001", "email": "alok.ag@reliance.com", "isPrimary": false },
+  { "id": 3, "client": "Khanna, Rajesh", "name": "Rajesh Khanna", "role": "Proprietor", "phone": "+91 91234 56789", "email": "rajesh@khanna.in", "isPrimary": true },
+  { "id": 4, "client": "Wipro Ltd", "name": "Thierry Delaporte", "role": "MD & CEO", "phone": "+91 88888 77777", "email": "thierry@wipro.com", "isPrimary": true }
+]

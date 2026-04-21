@@ -1,0 +1,6 @@
+[
+  { "id": 1, "client": "Reliance Industries Ltd.", "service": "Statutory Audit", "totalFee": 500000, "received": 200000, "balance": 300000, "status": "Partially Paid" },
+  { "id": 2, "client": "Khanna, Rajesh", "service": "Income Tax Planning", "totalFee": 45000, "received": 45000, "balance": 0, "status": "Paid" },
+  { "id": 3, "client": "Wipro Ltd", "service": "Internal Audit", "totalFee": 250000, "received": 0, "balance": 250000, "status": "Unpaid" },
+  { "id": 4, "client": "Adani Trust", "service": "Compliance Retainer", "totalFee": 120000, "received": 60000, "balance": 60000, "status": "Partially Paid" }
+]

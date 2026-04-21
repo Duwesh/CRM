@@ -1,0 +1,6 @@
+[
+  { "id": "E-1001", "title": "Statutory Audit FY23-24", "client": "Reliance Industries", "manager": "Anil K.", "status": "Active", "progress": 65, "dueDate": "2024-09-30" },
+  { "id": "E-1002", "title": "Tax Planning & Filing", "client": "Khanna, Rajesh", "manager": "Priya M.", "status": "Review", "progress": 90, "dueDate": "2024-07-31" },
+  { "id": "E-1003", "title": "Company Incorporation", "client": "NewCo Startup", "manager": "Anil K.", "status": "Onboarding", "progress": 20, "dueDate": "2024-05-15" },
+  { "id": "E-1004", "title": "GST Consultation", "client": "Adani Group", "manager": "Admin", "status": "Active", "progress": 40, "dueDate": "2024-08-15" }
+]
