@@ -1,0 +1,110 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 210 53% 11%;
+  --foreground: 210 40% 98%;
+  --card: 213 48% 15%;
+  --card-foreground: 210 40% 98%;
+  --popover: 210 53% 11%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 45 53% 54%;
+  --primary-foreground: 210 53% 11%;
+  --secondary: 217 33% 17%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 217 33% 17%;
+  --muted-foreground: 215 20% 65%;
+  --accent: 217 33% 17%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 217 33% 17%;
+  --input: 217 33% 17%;
+  --ring: 45 53% 54%;
+  --radius: 0.75rem;
+
+  /* Legacy utility vars */
+  --navy: #0d1b2a;
+  --navy-2: #132338;
+  --navy-3: #1a2f45;
+  --navy-4: #1e3a52;
+  --gold: #c9a84c;
+  --gold-light: #e4c87a;
+  --gold-soft: rgba(201,168,76,0.12);
+  --gold-border: rgba(201,168,76,0.25);
+  --teal: #2dd4bf;
+  --teal-soft: rgba(45,212,191,0.1);
+  --border-hex: rgba(255,255,255,0.07);
+  --border-2-hex: rgba(255,255,255,0.12);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+body {
+  @apply bg-navy text-[#e8edf2] min-h-screen font-sans antialiased;
+  background-attachment: fixed;
+}
+
+/* Background Texture */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 80% 20%, rgba(201,168,76,0.04) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 60% at 10% 80%, rgba(45,212,191,0.03) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Scrollbar Customization */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-navy-4 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-navy-3;
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-card border border-border rounded-lg backdrop-blur-[4px] transition-all;
+  }
+  
+  .glass-card:hover {
+    @apply border-border-2;
+  }
+
+  .nav-item {
+    @apply flex items-center gap-2.5 px-3.5 py-2 mx-2 rounded-lg cursor-pointer text-[13px] text-text-2 transition-all border border-transparent hover:bg-white/5 hover:text-white;
+  }
+
+  .nav-item.active {
+    @apply bg-gold-soft border-gold-border text-gold-light font-medium;
+  }
+
+  .btn-gold {
+    @apply bg-gold text-navy px-4 py-2 rounded-lg font-semibold text-[13px] transition-all hover:opacity-90 active:scale-95;
+  }
+
+  .stat-num {
+    @apply font-serif text-[28px] text-text leading-none;
+  }
+}
