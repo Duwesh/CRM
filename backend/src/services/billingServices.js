@@ -2,8 +2,10 @@ import { Op } from 'sequelize';
 import { Engagement, Client, Deadline, Invoice, InvoiceSequence, Firm, sequelize } from '../models/index.js';
 import { generateInvoicePDF } from './pdfService.js';
 import { supabase } from '../config/supabase.js';
+import { ensureBucketExists } from './uploadService.js';
 
 const uploadPDFToSupabase = async (buffer, filename) => {
+  await ensureBucketExists();
   const { data, error } = await supabase.storage
     .from('firmedge')
     .upload(`invoices/${filename}.pdf`, buffer, {

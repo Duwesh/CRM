@@ -10,6 +10,21 @@ export const upload = multer({
 });
 
 /**
+ * Ensures the bucket exists in Supabase Storage
+ */
+export const ensureBucketExists = async () => {
+  const { data: buckets, error } = await supabase.storage.listBuckets();
+  if (error) return; // Non-blocking if list fails
+
+  if (!buckets.find(b => b.name === 'firmedge')) {
+    await supabase.storage.createBucket('firmedge', {
+      public: true,
+      allowedMimeTypes: ['image/png', 'image/jpeg', 'application/pdf'],
+    });
+  }
+};
+
+/**
  * Uploads a file buffer to Supabase Storage
  * @param {Buffer} buffer - File buffer
  * @param {string} folder - Folder path (e.g., 'branding' or 'docs')
@@ -18,6 +33,7 @@ export const upload = multer({
  * @returns {string} - Public URL of the uploaded file
  */
 export const uploadToSupabase = async (buffer, folder, filename, mimetype) => {
+  await ensureBucketExists();
   const path = `${folder}/${Date.now()}_${filename.replace(/\s+/g, '_')}`;
   
   const { data, error } = await supabase.storage
