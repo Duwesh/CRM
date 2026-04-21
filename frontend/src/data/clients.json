@@ -1,0 +1,62 @@
+[
+  {
+    "id": 1,
+    "name": "Sharma Enterprises Pvt Ltd",
+    "email": "accounts@sharma.com",
+    "type": "Company (Pvt Ltd)",
+    "pan": "AA92L234P",
+    "gstin": "07AA9CS1234F1Z6",
+    "services": ["Statutory Audit", "Tax Audit", "GST Returns"],
+    "manager": "CA Amit Gupta",
+    "status": "active",
+    "since": "2010"
+  },
+  {
+    "id": 2,
+    "name": "Rajesh Kumar Agarwal",
+    "email": "rajesh@gmail.com",
+    "type": "HUF",
+    "pan": "AA92L234P",
+    "gstin": "",
+    "services": ["ITR Filing", "Bookkeeping"],
+    "manager": "Priya Mehta",
+    "status": "active",
+    "since": "2020"
+  },
+  {
+    "id": 3,
+    "name": "TechNova Solutions LLP",
+    "email": "finance@technova.in",
+    "type": "LLP",
+    "pan": "AA92L234P",
+    "gstin": "07AA9CS1234F1Z6",
+    "services": ["ITR Filing", "GST Returns", "ROC Filings"],
+    "manager": "CA Amit Gupta",
+    "status": "active",
+    "since": "2021"
+  },
+  {
+    "id": 4,
+    "name": "Green Valley Trust",
+    "email": "info@greenvalley.org",
+    "type": "Trust / NGO",
+    "pan": "AA92L234P",
+    "gstin": "",
+    "services": ["ITR Filing", "Statutory Audit", "Company Law"],
+    "manager": "Priya Mehta",
+    "status": "active",
+    "since": "2019"
+  },
+  {
+    "id": 5,
+    "name": "Meera Patel",
+    "email": "meera.p@gmail.com",
+    "type": "Individual",
+    "pan": "AA92L234P",
+    "gstin": "",
+    "services": ["ITR Filing"],
+    "manager": "Rahul Sharma",
+    "status": "active",
+    "since": "2022"
+  }
+]

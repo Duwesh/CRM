@@ -1,0 +1,6 @@
+[
+  { "id": 1, "name": "Zomato Ltd", "contact": "Deepinder G.", "value": "₹5,00,000", "stage": "Negotiation", "score": 85 },
+  { "id": 2, "name": "Spectral Labs", "contact": "Siddharth S.", "value": "₹1,20,000", "stage": "Prospect", "score": 62 },
+  { "id": 3, "name": "Indo-Global Trust", "contact": "Meera R.", "value": "₹3,50,000", "stage": "Closed", "score": 100 },
+  { "id": 4, "name": "TechMatrix Solutions", "contact": "Rahul V.", "value": "₹2,00,000", "stage": "Lost", "score": 30 }
+]

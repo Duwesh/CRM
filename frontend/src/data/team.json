@@ -1,0 +1,6 @@
+[
+  { "id": 1, "name": "Anil Khanna", "role": "Partner", "email": "anil@khanna-ca.com", "status": "Active", "color": "#c9a84c" },
+  { "id": 2, "name": "Priya Mehta", "role": "Senior Manager", "email": "priya@khanna-ca.com", "status": "Active", "color": "#6366F1" },
+  { "id": 3, "name": "Suresh Kumar", "role": "Audit Staff", "email": "suresh@khanna-ca.com", "status": "Away", "color": "#94A3B8" },
+  { "id": 4, "name": "Anita Rao", "role": "Tax Consultant", "email": "anita@khanna-ca.com", "status": "Active", "color": "#2dd4bf" }
+]
