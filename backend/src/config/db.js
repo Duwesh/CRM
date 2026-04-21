@@ -34,8 +34,6 @@ export const sequelize = new Sequelize(env.DATABASE_URL, {
   logging: false,
   dialectOptions: {
     ssl: env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
-    // Disable prepared statements — required when using Supabase transaction-mode pooler
-    prepareThreshold: 0,
   },
   pool: {
     max: 5,
