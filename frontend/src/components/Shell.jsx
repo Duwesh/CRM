@@ -109,8 +109,8 @@ export default function Shell({ children }) {
 
   return (
     <div className="flex h-screen overflow-hidden text-text">
-       {/* Quick Add Modal */}
-       <Modal
+      {/* Quick Add Modal */}
+      <Modal
         isOpen={isQuickAddOpen}
         onClose={() => setIsQuickAddOpen(false)}
         title="Quick Access"
@@ -307,7 +307,6 @@ export default function Shell({ children }) {
               {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
             <div>
-              <div className="font-serif text-xl">Good morning 👋</div>
               <div className="text-xs text-text-3 mt-0.5">
                 {new Date().toLocaleDateString("en-US", {
                   weekday: "long",
