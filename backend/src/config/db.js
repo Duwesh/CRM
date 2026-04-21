@@ -32,9 +32,16 @@ export const supabaseAdmin = createClient(
 export const sequelize = new Sequelize(env.DATABASE_URL, {
   dialect: "postgres",
   logging: false,
-  // logging: env.NODE_ENV === 'development' ? console.log : false,
   dialectOptions: {
     ssl: env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
+    // Disable prepared statements — required when using Supabase transaction-mode pooler
+    prepareThreshold: 0,
+  },
+  pool: {
+    max: 5,
+    min: 0,
+    acquire: 30000,
+    idle: 10000,
   },
   define: {
     timestamps: true,
@@ -50,9 +57,9 @@ export const sequelize = new Sequelize(env.DATABASE_URL, {
 export const pool = new Pool({
   connectionString: env.DATABASE_URL,
   ssl: env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
-  max: 20,
+  max: 5,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionTimeoutMillis: 5000,
 });
 
 pool.on("error", (err) => {
