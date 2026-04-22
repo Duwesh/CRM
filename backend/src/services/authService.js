@@ -155,6 +155,125 @@ export const resetPassword = async (token, newPassword) => {
   });
 };
 
+export const syncUser = async (supabaseUid) => {
+  const user = await User.findOne({
+    where: { supabase_uid: supabaseUid },
+    include: [{ model: Firm, attributes: ["name", "logo_url"] }],
+  });
+
+  if (!user) return { needsOnboarding: true };
+
+  return {
+    needsOnboarding: false,
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      firmId: user.firm_id,
+    },
+    firm: {
+      name: user.Firm?.name,
+      logo_url: user.Firm?.logo_url,
+    },
+  };
+};
+
+export const signup = async ({ email, password, name, firmName }, supabaseAdmin) => {
+  // Create Supabase auth user as already confirmed — no confirmation email sent
+  const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { full_name: name },
+  });
+
+  if (authError) {
+    console.error('Supabase admin.createUser error:', authError);
+    if (authError.message?.toLowerCase().includes('already registered') ||
+        authError.message?.toLowerCase().includes('already exists')) {
+      throw new AppError('An account with this email already exists.', 409);
+    }
+    throw new AppError(authError.message, 400);
+  }
+
+  const supabaseUser = authData.user;
+
+  try {
+    return await sequelize.transaction(async (t) => {
+      const firm = await Firm.create(
+        { name: firmName, email },
+        { transaction: t }
+      );
+
+      await InvoiceSequence.create({ firm_id: firm.id }, { transaction: t });
+
+      const user = await User.create(
+        {
+          firm_id: firm.id,
+          supabase_uid: supabaseUser.id,
+          name,
+          email,
+          role: "owner",
+        },
+        { transaction: t }
+      );
+
+      return {
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          firmId: firm.id,
+        },
+        firm: { name: firm.name },
+      };
+    });
+  } catch (err) {
+    // Roll back the Supabase auth user if DB insert fails
+    await supabaseAdmin.auth.admin.deleteUser(supabaseUser.id);
+    throw err;
+  }
+};
+
+export const completeSetup = async (supabaseUser, firmName) => {
+  return await sequelize.transaction(async (t) => {
+    const firm = await Firm.create(
+      { name: firmName, email: supabaseUser.email },
+      { transaction: t }
+    );
+
+    await InvoiceSequence.create({ firm_id: firm.id }, { transaction: t });
+
+    const name =
+      supabaseUser.user_metadata?.full_name ||
+      supabaseUser.email.split("@")[0];
+
+    const user = await User.create(
+      {
+        firm_id: firm.id,
+        supabase_uid: supabaseUser.id,
+        name,
+        email: supabaseUser.email,
+        role: "owner",
+      },
+      { transaction: t }
+    );
+
+    return {
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        firmId: firm.id,
+      },
+      firm: { name: firm.name },
+    };
+  });
+};
+
 export const getUserInfo = async (userId) => {
   const user = await User.findByPk(userId, {
     attributes: ["id", "name", "email", "role", "firm_id"],

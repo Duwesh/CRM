@@ -6,6 +6,19 @@ import { protect } from '../middleware/auth.js';
 const router = Router();
 
 /**
+ * @route   POST /api/auth/sync
+ * @desc    Check if Supabase OAuth user exists in DB; returns needsOnboarding flag
+ */
+router.post('/signup', AuthController.signup);
+router.post('/sync', AuthController.syncUser);
+
+/**
+ * @route   POST /api/auth/complete-setup
+ * @desc    Create Firm + User record for a new Google OAuth user
+ */
+router.post('/complete-setup', AuthController.completeSetup);
+
+/**
  * @route   GET /api/auth/me
  * @desc    Get current user and firm info
  */

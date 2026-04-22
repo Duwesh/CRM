@@ -1,46 +1,34 @@
-import jwt from "jsonwebtoken";
-import { env } from "../config/env.js";
+import { supabaseAdmin } from "../config/db.js";
 import { User } from "../models/index.js";
 import { AppError } from "./errorHandler.js";
 
 export const protect = async (req, _res, next) => {
-  const authHeader = req.headers.authorization;
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) throw new AppError("No token provided", 401);
 
-  if (!authHeader?.startsWith("Bearer ")) {
-    throw new AppError("No token provided", 401);
-  }
+  const {
+    data: { user: supabaseUser },
+    error,
+  } = await supabaseAdmin.auth.getUser(token);
 
-  const token = authHeader.split(" ")[1];
+  if (error || !supabaseUser) throw new AppError("Invalid or expired token", 401);
 
-  try {
-    const decoded = jwt.verify(token, env.JWT_SECRET);
+  const user = await User.findOne({
+    where: { supabase_uid: supabaseUser.id, is_active: true },
+    attributes: ["id", "firm_id", "role"],
+  });
 
-    // Verify user still exists and is active
-    const user = await User.findOne({
-      where: { id: decoded.userId, is_active: true },
-      attributes: ["id", "firm_id", "role"],
-    });
+  if (!user) throw new AppError("User not found or deactivated", 401);
 
-    if (!user) {
-      throw new AppError("User not found or deactivated", 401);
-    }
+  req.user = {
+    userId: user.id,
+    firmId: user.firm_id,
+    role: user.role,
+  };
 
-    req.user = {
-      userId: user.id,
-      firmId: user.firm_id,
-      role: user.role,
-    };
-
-    next();
-  } catch (error) {
-    if (error instanceof AppError) {
-      throw error;
-    }
-    throw new AppError("Invalid or expired token", 401);
-  }
+  next();
 };
 
-// Role-based access guard
 export const requireRole =
   (...roles) =>
   (_req, _res, next) => {

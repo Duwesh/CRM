@@ -15,6 +15,7 @@ import interactionRoutes from './interactions.js';
 import reminderRoutes from './reminders.js';
 import documentRoutes from './documents.js';
 import settingsRoutes from './settings.js';
+import notificationsRoutes from './notifications.js';
 
 const router = Router();
 
@@ -33,5 +34,6 @@ router.use('/interactions', interactionRoutes);
 router.use('/reminders', reminderRoutes);
 router.use('/documents', documentRoutes);
 router.use('/settings', settingsRoutes);
+router.use('/notifications', notificationsRoutes);
 
 export default router;

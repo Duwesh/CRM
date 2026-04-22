@@ -9,6 +9,11 @@ const User = sequelize.define(
       autoIncrement: true,
       primaryKey: true,
     },
+    supabase_uid: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      unique: true,
+    },
     firm_id: {
       type: DataTypes.BIGINT,
       allowNull: false,
@@ -24,7 +29,7 @@ const User = sequelize.define(
     },
     password_hash: {
       type: DataTypes.TEXT,
-      allowNull: false,
+      allowNull: true,
     },
     role: {
       type: DataTypes.STRING,
