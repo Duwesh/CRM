@@ -96,7 +96,7 @@ export default function Dashboard() {
 
   return (
     <Shell>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
         <StatCard
           title="Active Clients"
           value={stats.clients}
@@ -133,7 +133,7 @@ export default function Dashboard() {
         {/* Main Panel */}
         <div className="lg:col-span-2 flex flex-col gap-6">
           <Card className="border-border/50 bg-card/50">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6">
+            <CardHeader className="flex flex-row items-start sm:items-center justify-between space-y-0 pb-6 gap-3">
               <div>
                 <CardTitle className="font-serif text-xl">
                   Upcoming Deadlines & Compliance
@@ -200,7 +200,7 @@ export default function Dashboard() {
           </Card>
 
           <Card className="border-border/50 bg-card/50">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6">
+            <CardHeader className="flex flex-row items-start sm:items-center justify-between space-y-0 pb-6 gap-3">
               <CardTitle className="font-serif text-xl">
                 Active Engagements Pipeline
               </CardTitle>

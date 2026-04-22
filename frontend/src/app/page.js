@@ -18,7 +18,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-navy flex items-center justify-center">
       <div className="animate-pulse">
-        <h1 className="font-serif text-3xl text-gold tracking-widest">FirmEdge</h1>
+        <img src="/PV_Logo.png" alt="PV Logo" className="h-12 w-auto object-contain" />
       </div>
     </div>
   );

@@ -1,4 +1,8 @@
-import { IBM_Plex_Sans, Libre_Baskerville, IBM_Plex_Mono } from "next/font/google";
+import {
+  IBM_Plex_Sans,
+  Libre_Baskerville,
+  IBM_Plex_Mono,
+} from "next/font/google";
 import "./globals.css";
 
 const ibmSans = IBM_Plex_Sans({
@@ -21,8 +25,12 @@ const ibmMono = IBM_Plex_Mono({
 });
 
 export const metadata = {
-  title: "FirmEdge CRM — CA & Consulting",
+  title: "PV Advisory",
   description: "Advanced CRM for Chartered Accountants and Consulting Firms",
+  icons: {
+    icon: "/PV_Logo.png",
+    apple: "/PV_Logo.png",
+  },
 };
 
 import { Toaster } from "@/components/ui/toaster";

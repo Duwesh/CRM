@@ -21,16 +21,18 @@ import {
   Menu,
   X,
   Clock,
+  LogOut,
 } from "lucide-react";
 import Link from "next/link";
 import Modal from "./Modal";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "@/lib/api";
+import { supabase } from "@/lib/supabase";
 
-const NavItem = ({ icon, label, href, badge, badgeColor, active }) => {
+const NavItem = ({ icon, label, href, badge, badgeColor, active, onNavigate }) => {
   return (
-    <Link href={href} className={`nav-item ${active ? "active" : ""}`}>
+    <Link href={href} onClick={onNavigate} className={`nav-item ${active ? "active" : ""}`}>
       <span className="w-5 flex justify-center">{icon}</span>
       <span>{label}</span>
       {badge > 0 && (
@@ -50,7 +52,8 @@ const NavItem = ({ icon, label, href, badge, badgeColor, active }) => {
 
 export default function Shell({ children }) {
   const pathname = usePathname();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const router = useRouter();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [userInfo, setUserInfo] = useState({
@@ -62,6 +65,8 @@ export default function Shell({ children }) {
     leads: 0,
     tasks: 0,
   });
+  const [notifications, setNotifications] = useState([]);
+  const [notifsLoading, setNotifsLoading] = useState(false);
 
   const fetchMe = useCallback(async () => {
     try {
@@ -87,9 +92,25 @@ export default function Shell({ children }) {
     }
   }, []);
 
+  const fetchNotifications = useCallback(async () => {
+    setNotifsLoading(true);
+    try {
+      const res = await api.get("/notifications");
+      setNotifications(res.data.data.notifications || []);
+    } catch (err) {
+      console.error("Notifications fetch error:", err);
+    } finally {
+      setNotifsLoading(false);
+    }
+  }, []);
+
   React.useEffect(() => {
+    // Open sidebar by default on desktop
+    if (window.innerWidth >= 768) setSidebarOpen(true);
+
     fetchMe();
     fetchCounts();
+    fetchNotifications();
 
     const interval = setInterval(fetchCounts, 60000);
     const handleRefresh = () => fetchCounts();
@@ -99,7 +120,7 @@ export default function Shell({ children }) {
       clearInterval(interval);
       window.removeEventListener("refresh-counts", handleRefresh);
     };
-  }, [fetchMe, fetchCounts]);
+  }, [fetchMe, fetchCounts, fetchNotifications]);
 
   const initials = userInfo.user.name
     .split(" ")
@@ -107,8 +128,20 @@ export default function Shell({ children }) {
     .join("")
     .toUpperCase();
 
+  const closeSidebarOnMobile = () => {
+    if (window.innerWidth < 768) setSidebarOpen(false);
+  };
+
   return (
     <div className="flex h-screen overflow-hidden text-text">
+      {/* Mobile backdrop */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Quick Add Modal */}
       <Modal
         isOpen={isQuickAddOpen}
@@ -152,13 +185,16 @@ export default function Shell({ children }) {
       </Modal>
 
       <aside
-        className={`${sidebarOpen ? "w-[240px]" : "w-0"} bg-navy-2 border-r border-border flex flex-col flex-shrink-0 transition-all duration-300 overflow-y-auto z-50`}
+        className={`fixed md:relative inset-y-0 left-0 z-50 ${sidebarOpen ? "w-[240px]" : "w-0"} bg-navy-2 border-r border-border flex flex-col flex-shrink-0 transition-all duration-300 overflow-y-auto overflow-x-hidden`}
       >
+        <div className="min-w-[240px]">
         <div className="p-6 border-b border-border">
-          <div className="font-serif text-[22px] text-gold tracking-wide">
-            FirmEdge
-          </div>
-          <div className="text-[10px] text-text-3 uppercase tracking-[1.5px] mt-1 font-mono">
+          <img
+            src="/PV_Logo.png"
+            alt="PV Logo"
+            className="h-10 w-auto object-contain"
+          />
+          <div className="text-[10px] text-text-3 uppercase tracking-[1.5px] mt-2 font-mono">
             {userInfo.firm.type || "CA · Consulting CRM"}
           </div>
         </div>
@@ -172,6 +208,7 @@ export default function Shell({ children }) {
             label="Dashboard"
             href="/dashboard"
             active={pathname === "/dashboard"}
+            onNavigate={closeSidebarOnMobile}
           />
 
           <div className="px-5 py-3 text-[9px] uppercase tracking-[1.5px] text-text-3 font-semibold font-mono mt-2">
@@ -183,12 +220,14 @@ export default function Shell({ children }) {
             href="/clients"
             badge={counts.clients}
             active={pathname === "/clients"}
+            onNavigate={closeSidebarOnMobile}
           />
           <NavItem
             icon={<User size={16} />}
             label="Contacts"
             href="/contacts"
             active={pathname === "/contacts"}
+            onNavigate={closeSidebarOnMobile}
           />
           <NavItem
             icon={<Target size={16} />}
@@ -197,6 +236,7 @@ export default function Shell({ children }) {
             badge={counts.leads}
             badgeColor="#2dd4bf"
             active={pathname === "/leads"}
+            onNavigate={closeSidebarOnMobile}
           />
 
           <div className="px-5 py-3 text-[9px] uppercase tracking-[1.5px] text-text-3 font-semibold font-mono mt-2">
@@ -207,6 +247,7 @@ export default function Shell({ children }) {
             label="Engagements"
             href="/engagements"
             active={pathname === "/engagements"}
+            onNavigate={closeSidebarOnMobile}
           />
           <NavItem
             icon={<CheckSquare size={16} />}
@@ -215,18 +256,21 @@ export default function Shell({ children }) {
             badge={counts.tasks}
             badgeColor="#f87171"
             active={pathname === "/tasks"}
+            onNavigate={closeSidebarOnMobile}
           />
           <NavItem
             icon={<Calendar size={16} />}
             label="Deadlines"
             href="/deadlines"
             active={pathname === "/deadlines"}
+            onNavigate={closeSidebarOnMobile}
           />
           <NavItem
             icon={<FileText size={16} />}
             label="Documents"
             href="/documents"
             active={pathname === "/documents"}
+            onNavigate={closeSidebarOnMobile}
           />
 
           <div className="px-5 py-3 text-[9px] uppercase tracking-[1.5px] text-text-3 font-semibold font-mono mt-2">
@@ -237,12 +281,14 @@ export default function Shell({ children }) {
             label="Invoices"
             href="/invoices"
             active={pathname === "/invoices"}
+            onNavigate={closeSidebarOnMobile}
           />
           <NavItem
             icon={<CircleDollarSign size={16} />}
             label="Fee Tracker"
             href="/fees"
             active={pathname === "/fees"}
+            onNavigate={closeSidebarOnMobile}
           />
 
           <div className="px-5 py-3 text-[9px] uppercase tracking-[1.5px] text-text-3 font-semibold font-mono mt-2">
@@ -253,6 +299,7 @@ export default function Shell({ children }) {
             label="Team"
             href="/team"
             active={pathname === "/team"}
+            onNavigate={closeSidebarOnMobile}
           />
 
           <div className="px-5 py-3 text-[9px] uppercase tracking-[1.5px] text-text-3 font-semibold font-mono mt-2">
@@ -263,12 +310,14 @@ export default function Shell({ children }) {
             label="Interactions"
             href="/interactions"
             active={pathname === "/interactions"}
+            onNavigate={closeSidebarOnMobile}
           />
           <NavItem
             icon={<Bell size={16} />}
             label="Reminders"
             href="/reminders"
             active={pathname === "/reminders"}
+            onNavigate={closeSidebarOnMobile}
           />
         </div>
 
@@ -286,27 +335,40 @@ export default function Shell({ children }) {
               </div>
             </div>
           </div>
-          <Link
-            href="/settings"
-            className="flex items-center gap-2 mt-4 text-xs text-text-2 hover:text-text"
-          >
-            <Settings size={14} /> Settings
-          </Link>
+          <div className="mt-4 flex items-center justify-between">
+            <Link
+              href="/settings"
+              className="flex items-center gap-2 text-xs text-text-2 hover:text-text transition-colors"
+            >
+              <Settings size={14} /> Settings
+            </Link>
+            <button
+              onClick={async () => {
+                await supabase.auth.signOut();
+                router.push("/login");
+              }}
+              className="flex items-center gap-1.5 text-xs text-text-3 hover:text-red transition-colors"
+              title="Sign out"
+            >
+              <LogOut size={14} /> Sign out
+            </button>
+          </div>
         </div>
+        </div>{/* end min-w wrapper */}
       </aside>
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col relative overflow-hidden">
         {/* Topbar */}
-        <header className="h-16 flex items-center justify-between px-8 bg-navy/60 backdrop-blur-md border-b border-border flex-shrink-0 z-40">
-          <div className="flex items-center gap-4">
+        <header className="h-16 flex items-center justify-between px-4 md:px-8 bg-navy/60 backdrop-blur-md border-b border-border flex-shrink-0 z-40">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="text-text-3 hover:text-text transition-colors"
+              className="text-text-3 hover:text-text transition-colors flex-shrink-0"
             >
               {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
-            <div>
+            <div className="hidden sm:block">
               <div className="text-xs text-text-3 mt-0.5">
                 {new Date().toLocaleDateString("en-US", {
                   weekday: "long",
@@ -317,8 +379,8 @@ export default function Shell({ children }) {
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="relative group">
+          <div className="flex items-center gap-2 md:gap-4">
+            <div className="relative group hidden md:block">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-3 w-3.5 h-3.5" />
               <input
                 type="text"
@@ -329,11 +391,16 @@ export default function Shell({ children }) {
 
             <div className="relative">
               <button
-                onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+                onClick={() => {
+                  setIsNotificationsOpen(!isNotificationsOpen);
+                  if (!isNotificationsOpen) fetchNotifications();
+                }}
                 className="p-2 hover:bg-white/5 rounded-lg text-text-3 hover:text-text transition-all relative"
               >
                 <Bell size={20} />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red rounded-full border-2 border-navy-2 animate-pulse" />
+                {notifications.length > 0 && (
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red rounded-full border-2 border-navy-2 animate-pulse" />
+                )}
               </button>
 
               <AnimatePresence>
@@ -350,53 +417,40 @@ export default function Shell({ children }) {
                       className="absolute right-0 mt-2 w-[340px] bg-navy-2 border border-border-2 shadow-2xl rounded-xl overflow-hidden z-50 text-left"
                     >
                       <div className="p-4 border-b border-border flex items-center justify-between">
-                        <span className="font-serif text-sm">
-                          Notifications
-                        </span>
-                        <button className="text-[10px] text-gold uppercase tracking-widest font-mono">
-                          Mark all read
-                        </button>
+                        <span className="font-serif text-sm">Notifications</span>
+                        {notifications.length > 0 && (
+                          <span className="text-[10px] text-gold font-mono uppercase tracking-widest">
+                            {notifications.length} active
+                          </span>
+                        )}
                       </div>
                       <div className="max-h-[400px] overflow-y-auto">
-                        {[
-                          {
-                            title: "Task Overdue",
-                            desc: "GST Filing for Reliance is overdue by 2 days.",
-                            time: "2h ago",
-                            icon: <Clock size={14} />,
-                            color: "text-red",
-                          },
-                          {
-                            title: "New Document",
-                            desc: "Priya Mehta uploaded Audit_Working_Draft.pdf",
-                            time: "5h ago",
-                            icon: <FileText size={14} />,
-                            color: "text-blue",
-                          },
-                          {
-                            title: "Invoice Paid",
-                            desc: "Khanna, Rajesh paid INV-2024-002 (₹45,000)",
-                            time: "1d ago",
-                            icon: <CheckSquare size={14} />,
-                            color: "text-green",
-                          },
-                          {
-                            title: "Client Message",
-                            desc: "Siddharth from Spectral Labs left a note.",
-                            time: "2d ago",
-                            icon: <MessageSquare size={14} />,
-                            color: "text-amber",
-                          },
-                        ].map((notif, i) => (
-                          <div
-                            key={i}
-                            className="p-4 border-b border-border hover:bg-white/5 transition-colors cursor-pointer group"
-                          >
-                            <div className="flex gap-3">
-                              <div className={`mt-1 ${notif.color}`}>
-                                {notif.icon}
+                        {notifsLoading ? (
+                          <div className="p-6 text-center text-[11px] text-text-3 font-mono uppercase tracking-widest">
+                            Loading...
+                          </div>
+                        ) : notifications.length === 0 ? (
+                          <div className="p-8 text-center">
+                            <Bell size={24} className="text-text-3 mx-auto mb-3 opacity-40" />
+                            <p className="text-[12px] text-text-3">All caught up</p>
+                            <p className="text-[10px] text-text-3 opacity-60 mt-1">No pending tasks or deadlines</p>
+                          </div>
+                        ) : (
+                          notifications.slice(0, 8).map((notif) => (
+                            <Link
+                              key={notif.id}
+                              href={notif.link || "/notifications"}
+                              onClick={() => setIsNotificationsOpen(false)}
+                              className="p-4 border-b border-border hover:bg-white/5 transition-colors cursor-pointer group flex gap-3"
+                            >
+                              <div className={`mt-0.5 flex-shrink-0 ${notif.color}`}>
+                                {notif.icon === "Clock" && <Clock size={14} />}
+                                {notif.icon === "FileText" && <FileText size={14} />}
+                                {notif.icon === "CheckSquare" && <CheckSquare size={14} />}
+                                {notif.icon === "Calendar" && <Calendar size={14} />}
+                                {notif.icon === "MessageSquare" && <MessageSquare size={14} />}
                               </div>
-                              <div>
+                              <div className="min-w-0">
                                 <div className="text-[13px] font-medium text-text group-hover:text-gold-light transition-colors">
                                   {notif.title}
                                 </div>
@@ -407,12 +461,13 @@ export default function Shell({ children }) {
                                   {notif.time}
                                 </div>
                               </div>
-                            </div>
-                          </div>
-                        ))}
+                            </Link>
+                          ))
+                        )}
                       </div>
                       <Link
                         href="/notifications"
+                        onClick={() => setIsNotificationsOpen(false)}
                         className="p-3 bg-navy-3 block text-center text-[11px] text-text-3 hover:text-text transition-colors"
                       >
                         View All Activity
@@ -427,13 +482,14 @@ export default function Shell({ children }) {
               onClick={() => setIsQuickAddOpen(true)}
               className="btn-gold flex items-center gap-2"
             >
-              <Plus size={16} /> Quick Add
+              <Plus size={16} />
+              <span className="hidden sm:inline">Quick Add</span>
             </button>
           </div>
         </header>
 
         {/* Content Area */}
-        <main className="flex-1 overflow-y-auto p-8 relative">{children}</main>
+        <main className="flex-1 overflow-y-auto p-4 md:p-8 relative">{children}</main>
       </div>
     </div>
   );
