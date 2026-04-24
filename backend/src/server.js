@@ -21,7 +21,7 @@ const app = express();
 // ============================================
 app.use(helmet());
 app.use(cors({
-  origin: [env.FRONTEND_URL, 'http://localhost:3000'],
+  origin: [env.FRONTEND_URL, 'http://localhost:3000', 'https://pv-advisory-crm.vercel.app', 'https://pv-advisory-crm.com'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
