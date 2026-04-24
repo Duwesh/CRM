@@ -27,8 +27,8 @@ import Link from "next/link";
 import Modal from "./Modal";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import api from "@/lib/api";
 import { supabase } from "@/lib/supabase";
+import { getNotifications } from "@/lib/db/notifications";
 
 const NavItem = ({ icon, label, href, badge, badgeColor, active, onNavigate }) => {
   return (
@@ -53,6 +53,7 @@ const NavItem = ({ icon, label, href, badge, badgeColor, active, onNavigate }) =
 export default function Shell({ children }) {
   const pathname = usePathname();
   const router = useRouter();
+  const [authChecked, setAuthChecked] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -70,8 +71,19 @@ export default function Shell({ children }) {
 
   const fetchMe = useCallback(async () => {
     try {
-      const res = await api.get("/auth/me");
-      setUserInfo(res.data.data);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from("Tbl_Users")
+        .select("name, role, Tbl_Firms(name)")
+        .eq("supabase_uid", user.id)
+        .single();
+      if (data) {
+        setUserInfo({
+          user: { name: data.name, role: data.role },
+          firm: { name: data.Tbl_Firms?.name || "FirmEdge" },
+        });
+      }
     } catch (err) {
       console.error("Shell info fetch error:", err);
     }
@@ -79,12 +91,12 @@ export default function Shell({ children }) {
 
   const fetchCounts = useCallback(async () => {
     try {
-      const res = await api.get("/dashboard/summary");
-      if (res.data.status === "success" && res.data.data.stats) {
+      const { data } = await supabase.rpc("get_dashboard_summary");
+      if (data?.stats) {
         setCounts({
-          clients: res.data.data.stats.clients || 0,
-          leads: res.data.data.stats.leads || 0,
-          tasks: res.data.data.stats.tasks || 0,
+          clients: data.stats.clients || 0,
+          leads: data.stats.leads || 0,
+          tasks: data.stats.tasks || 0,
         });
       }
     } catch (err) {
@@ -95,8 +107,8 @@ export default function Shell({ children }) {
   const fetchNotifications = useCallback(async () => {
     setNotifsLoading(true);
     try {
-      const res = await api.get("/notifications");
-      setNotifications(res.data.data.notifications || []);
+      const data = await getNotifications();
+      setNotifications(data || []);
     } catch (err) {
       console.error("Notifications fetch error:", err);
     } finally {
@@ -105,22 +117,48 @@ export default function Shell({ children }) {
   }, []);
 
   React.useEffect(() => {
-    // Open sidebar by default on desktop
-    if (window.innerWidth >= 768) setSidebarOpen(true);
+    const init = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        router.push("/login");
+        return;
+      }
+      setAuthChecked(true);
+      if (window.innerWidth >= 768) setSidebarOpen(true);
+      fetchMe();
+      fetchCounts();
+      fetchNotifications();
+    };
 
-    fetchMe();
-    fetchCounts();
-    fetchNotifications();
+    init();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT" || !session) {
+        router.push("/login");
+      }
+    });
 
     const interval = setInterval(fetchCounts, 60000);
     const handleRefresh = () => fetchCounts();
     window.addEventListener("refresh-counts", handleRefresh);
 
     return () => {
+      subscription.unsubscribe();
       clearInterval(interval);
       window.removeEventListener("refresh-counts", handleRefresh);
     };
-  }, [fetchMe, fetchCounts, fetchNotifications]);
+  }, [fetchMe, fetchCounts, fetchNotifications, router]);
+
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#0d1b2a]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-[#c9a84c] border-t-transparent rounded-full animate-spin" />
+          <p className="text-slate-500 text-xs font-mono uppercase tracking-widest">Loading</p>
+        </div>
+      </div>
+    );
+  }
 
   const initials = userInfo.user.name
     .split(" ")

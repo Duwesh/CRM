@@ -7,7 +7,9 @@ import {
   CheckCircle2, Clock, AlertCircle, ArrowUpRight,
   Download, Loader2, IndianRupee,
 } from "lucide-react";
-import api from "@/lib/api";
+import { getInvoices, getInvoiceStats, createInvoice, updateInvoice, deleteInvoice } from "@/lib/db/invoices";
+import { downloadInvoicePDF } from "@/lib/db/pdf";
+import { getClients } from "@/lib/db/clients";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -76,20 +78,19 @@ export default function InvoicesPage() {
   const [isFormOpen, setIsFormOpen]     = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [editingItem, setEditingItem]   = useState(null);
-  const [deletingItem, setDeletingItem] = useState(null);
-  const [formData, setFormData]         = useState(EMPTY_FORM);
-  const [submitting, setSubmitting]     = useState(false);
+  const [deletingItem, setDeletingItem]   = useState(null);
+  const [formData, setFormData]           = useState(EMPTY_FORM);
+  const [submitting, setSubmitting]       = useState(false);
+  const [downloadingId, setDownloadingId] = useState(null);
 
   const { toast } = useToast();
 
   const fetchInvoices = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await api.get("/invoices", {
-        params: { page: currentPage, limit: itemsPerPage },
-      });
-      setInvoices(res.data.data.invoices || []);
-      setTotal(res.data.data.total || 0);
+      const result = await getInvoices({ page: currentPage, limit: itemsPerPage });
+      setInvoices(result.invoices);
+      setTotal(result.total);
     } catch {
       toast({ title: "Could not load invoices", variant: "destructive" });
     } finally {
@@ -99,15 +100,15 @@ export default function InvoicesPage() {
 
   const fetchStats = useCallback(async () => {
     try {
-      const res = await api.get("/invoices/stats");
-      setStats(res.data.data || { total: 0, collected: 0, outstanding: 0, overdue: 0 });
+      const data = await getInvoiceStats();
+      setStats(data);
     } catch { /* non-critical */ }
   }, []);
 
   const fetchClients = async () => {
     try {
-      const res = await api.get("/clients", { params: { limit: 200 } });
-      setClients(res.data.data.clients || []);
+      const clients = await getClients();
+      setClients(clients);
     } catch { /* non-critical */ }
   };
 
@@ -115,6 +116,17 @@ export default function InvoicesPage() {
   useEffect(() => { fetchStats(); }, [fetchStats]);
   useEffect(() => { fetchClients(); }, []);
   useEffect(() => { setCurrentPage(1); }, [statusFilter, search]);
+
+  const handleDownloadPDF = async (inv) => {
+    setDownloadingId(inv.id);
+    try {
+      await downloadInvoicePDF(inv);
+    } catch (err) {
+      toast({ title: "PDF Error", description: err.message, variant: "destructive" });
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   const field = (k) => (e) => setFormData((p) => ({ ...p, [k]: e.target.value }));
 
@@ -158,17 +170,17 @@ export default function InvoicesPage() {
         due_date:        formData.due_date || null,
       };
       if (editingItem) {
-        await api.put(`/invoices/${editingItem.id}`, payload);
+        await updateInvoice(editingItem.id, payload);
         toast({ title: "Invoice updated" });
       } else {
-        await api.post("/invoices", payload);
+        await createInvoice(payload);
         toast({ title: "Invoice created" });
       }
       setIsFormOpen(false);
       fetchInvoices();
       fetchStats();
     } catch (err) {
-      toast({ title: err?.response?.data?.message || "Save failed", variant: "destructive" });
+      toast({ title: err.message || "Save failed", variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
@@ -177,7 +189,7 @@ export default function InvoicesPage() {
   const confirmDelete = async () => {
     if (!deletingItem) return;
     try {
-      await api.delete(`/invoices/${deletingItem.id}`);
+      await deleteInvoice(deletingItem.id);
       toast({ title: "Invoice deleted" });
       setIsDeleteOpen(false);
       setDeletingItem(null);
@@ -308,11 +320,16 @@ export default function InvoicesPage() {
                       </TableCell>
                       <TableCell className="px-4 py-3">
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          {inv.pdf_url && (
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" asChild>
-                              <a href={inv.pdf_url} target="_blank" rel="noreferrer"><Download size={13} /></a>
-                            </Button>
-                          )}
+                          <Button
+                            variant="ghost" size="icon"
+                            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                            onClick={() => handleDownloadPDF(inv)}
+                            disabled={downloadingId === inv.id}
+                          >
+                            {downloadingId === inv.id
+                              ? <Loader2 size={13} className="animate-spin" />
+                              : <Download size={13} />}
+                          </Button>
                           <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => openEdit(inv)}>
                             <Edit2 size={13} />
                           </Button>
