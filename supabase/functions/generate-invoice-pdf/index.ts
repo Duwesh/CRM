@@ -219,31 +219,26 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } },
     );
 
-    const { error: authErr } = await userClient
+    // ── fetch invoice using caller's credentials (RLS enforced) ────────────
+    const { data: invoice, error: invoiceErr } = await userClient
       .from("Tbl_Invoices")
-      .select("id")
+      .select("*")
       .eq("id", invoice_id)
       .eq("is_deleted", false)
       .single();
 
-    if (authErr) {
+    if (invoiceErr || !invoice) {
       return new Response(JSON.stringify({ error: "Invoice not found or access denied" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // ── fetch full data with service role (bypasses RLS for joins) ───────────
+    // ── fetch client & firm with service role (bypasses RLS for joins) ──────
     const admin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
-
-    const { data: invoice } = await admin
-      .from("Tbl_Invoices")
-      .select("*")
-      .eq("id", invoice_id)
-      .single();
 
     const [{ data: client }, { data: firm }] = await Promise.all([
       admin.from("Tbl_Clients").select("name, email, phone, address").eq("id", invoice.client_id).single(),
