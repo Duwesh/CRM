@@ -56,7 +56,7 @@ export async function createInvoice(payload) {
 
   const { data, error } = await supabase
     .from("Tbl_Invoices")
-    .insert({ ...payload, firm_id, invoice_number: invoiceNumber })
+    .insert({ ...payload, firm_id, invoice_number: invoiceNumber, created_at: new Date().toISOString() })
     .select()
     .single();
   if (error) throw error;
