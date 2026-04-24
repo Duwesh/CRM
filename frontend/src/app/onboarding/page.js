@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import api from "@/lib/api";
+import { completeFirmSetup } from "@/lib/db/auth";
 import { Building2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,13 +25,13 @@ export default function OnboardingPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      await api.post("/auth/complete-setup", { firmName });
+      await completeFirmSetup({ firmName });
       router.push("/dashboard");
     } catch (err) {
       toast({
         variant: "destructive",
         title: "Setup Failed",
-        description: err.response?.data?.error || "Something went wrong",
+        description: err.message || "Something went wrong",
       });
     } finally {
       setLoading(false);

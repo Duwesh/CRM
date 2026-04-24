@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import api from "@/lib/api";
+import { signUp } from "@/lib/db/auth";
 import { Building2, User, Mail, Lock, Loader2, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 
@@ -26,15 +26,13 @@ export default function RegisterPage() {
     setError("");
 
     try {
-      // Backend creates the Supabase user as already confirmed — no email sent
-      await api.post("/auth/signup", {
+      await signUp({
         email: formData.email,
         password: formData.password,
         name: formData.name,
         firmName: formData.firmName,
       });
 
-      // Sign in immediately since user is already confirmed
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
@@ -45,7 +43,7 @@ export default function RegisterPage() {
 
       router.push("/dashboard");
     } catch (err) {
-      setError(err.response?.data?.error || err.response?.data?.message || err.message || "Registration failed. Please try again.");
+      setError(err.message || "Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }

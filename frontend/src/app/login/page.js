@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import api from "@/lib/api";
+import { getUserProfile } from "@/lib/db/auth";
 import { Lock, Mail, Loader2, ArrowRight, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,8 +36,8 @@ export default function LoginPage() {
       if (error) throw error;
       if (!data.session) throw new Error("No session returned");
 
-      const res = await api.post("/auth/sync");
-      if (res.data.data.needsOnboarding) {
+      const profile = await getUserProfile();
+      if (!profile) {
         router.push("/onboarding");
       } else {
         toast({ title: "Welcome Back", description: "Redirecting to your dashboard." });

@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import api from "@/lib/api";
+import { getUserProfile, completeFirmSetup } from "@/lib/db/auth";
 import { Loader2 } from "lucide-react";
 
 export default function AuthCallback() {
@@ -22,13 +22,12 @@ export default function AuthCallback() {
       }
 
       try {
-        const res = await api.post("/auth/sync");
-        if (res.data.data.needsOnboarding) {
-          // If they registered with email and have a pending firm name, complete setup now
+        const profile = await getUserProfile();
+        if (!profile || !profile.firm_id) {
           const pendingFirmName = localStorage.getItem("pendingFirmName");
           if (pendingFirmName) {
             localStorage.removeItem("pendingFirmName");
-            await api.post("/auth/complete-setup", { firmName: pendingFirmName });
+            await completeFirmSetup({ firmName: pendingFirmName });
             router.push("/dashboard");
           } else {
             router.push("/onboarding");

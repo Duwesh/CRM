@@ -13,7 +13,7 @@ import {
   Activity,
   ChevronRight,
 } from "lucide-react";
-import api from "@/lib/api";
+import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import {
   Card,
@@ -68,7 +68,7 @@ export default function Dashboard() {
       clients: 0,
       tasks: 0,
       deadlines: 0,
-      revenue: "₹0",
+      outstandingAmount: 0,
     },
     upcomingDeadlines: [],
     overdueInvoices: [],
@@ -79,11 +79,11 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await api.get("/dashboard/summary");
-        setData(res.data.data);
+        const { data: result, error } = await supabase.rpc("get_dashboard_summary");
+        if (error) throw error;
+        setData(result);
       } catch (err) {
         console.error("Dashboard fetch error:", err);
-        // setData(dashboardData); // Optional fallback
       } finally {
         setLoading(false);
       }
@@ -121,10 +121,8 @@ export default function Dashboard() {
         />
         <StatCard
           title="Outstanding Fees"
-          value={stats.revenue}
+          value={`₹${new Intl.NumberFormat("en-IN").format(stats.outstandingAmount ?? 0)}`}
           icon={<CircleDollarSign size={20} />}
-          change={stats.revenueChange}
-          isUp={stats.revenueIsUp}
           href="/fees"
         />
       </div>
@@ -178,7 +176,7 @@ export default function Dashboard() {
                         {deadline.form_name || deadline.title}
                       </div>
                       <div className="text-[11px] text-muted-foreground">
-                        {deadline.Client?.name}
+                        {deadline.client_name}
                       </div>
                     </div>
                     <Badge
@@ -260,7 +258,7 @@ export default function Dashboard() {
                   >
                     <div>
                       <div className="text-[12px] font-medium group-hover:text-primary transition-colors">
-                        {inv.Client?.name}
+                        {inv.client_name}
                       </div>
                       <div className="text-[10px] text-destructive font-mono uppercase">
                         Due {new Date(inv.due_date).toLocaleDateString()}
@@ -324,7 +322,7 @@ export default function Dashboard() {
                       </div>
                       <div className="text-[12px] font-medium text-foreground">
                         <span className="text-primary">
-                          {act.TeamMember?.name || "User"}
+                          {act.team_member_name || "User"}
                         </span>{" "}
                         • {act.interaction_type}
                       </div>
