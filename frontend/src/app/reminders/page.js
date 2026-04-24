@@ -13,7 +13,9 @@ import {
   AlertCircle,
   MinusCircle,
 } from "lucide-react";
-import api from "@/lib/api";
+import { getReminders, createReminder, updateReminder, toggleReminder, deleteReminder } from "@/lib/db/reminders";
+import { getClients } from "@/lib/db/clients";
+import { getTeamMembers } from "@/lib/db/team";
 import { REMINDER_PRIORITY_STYLES } from "@/lib/constants";
 
 const PRIORITY_ICONS = {
@@ -102,15 +104,8 @@ export default function RemindersPage() {
   const fetchReminders = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await api.get("/reminders", {
-        params: {
-          page: currentPage,
-          limit: itemsPerPage,
-          status: statusFilter === "all" ? undefined : statusFilter,
-        },
-      });
-      setReminders(res.data.data.reminders || []);
-      setTotal(res.data.data.total || 0);
+      const reminders = await getReminders();
+      setReminders(reminders);
     } catch {
       setReminders([]);
       toast({ title: "Could not load reminders", variant: "destructive" });
@@ -121,12 +116,9 @@ export default function RemindersPage() {
 
   const fetchMeta = async () => {
     try {
-      const [cl, tm] = await Promise.all([
-        api.get("/clients", { params: { limit: 200 } }),
-        api.get("/team"),
-      ]);
-      setClients(cl.data.data.clients || []);
-      setTeamMembers(tm.data.data.members || []);
+      const [clients, team] = await Promise.all([getClients(), getTeamMembers()]);
+      setClients(clients);
+      setTeamMembers(team);
     } catch {
       /* non-critical */
     }
@@ -175,10 +167,10 @@ export default function RemindersPage() {
         assigned_to: values.assigned_to && values.assigned_to !== "none" ? Number(values.assigned_to) : null,
       };
       if (editingItem) {
-        await api.put(`/reminders/${editingItem.id}`, payload);
+        await updateReminder(editingItem.id, payload);
         toast({ title: "Reminder updated" });
       } else {
-        await api.post("/reminders", payload);
+        await createReminder(payload);
         toast({ title: "Reminder set" });
       }
       setIsFormOpen(false);
@@ -193,7 +185,7 @@ export default function RemindersPage() {
 
   const handleToggle = async (item) => {
     try {
-      await api.patch(`/reminders/${item.id}/toggle`);
+      await toggleReminder(item.id, item.is_done);
       setReminders((prev) =>
         prev.map((r) => (r.id === item.id ? { ...r, is_done: !r.is_done } : r)),
       );
@@ -205,7 +197,7 @@ export default function RemindersPage() {
   const confirmDelete = async () => {
     if (!deletingItem) return;
     try {
-      await api.delete(`/reminders/${deletingItem.id}`);
+      await deleteReminder(deletingItem.id);
       toast({ title: "Reminder deleted" });
       setIsDeleteOpen(false);
       setDeletingItem(null);

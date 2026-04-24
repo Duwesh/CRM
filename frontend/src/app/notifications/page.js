@@ -12,7 +12,7 @@ import {
   MessageSquare,
   RefreshCw,
 } from "lucide-react";
-import api from "@/lib/api";
+import { getNotifications } from "@/lib/db/notifications";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const ICON_MAP = {
@@ -49,8 +49,8 @@ export default function NotificationsPage() {
   const fetchNotifications = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await api.get("/notifications");
-      setNotifications(res.data.data.notifications || []);
+      const data = await getNotifications();
+      setNotifications(data || []);
     } catch (err) {
       console.error(err);
     } finally {

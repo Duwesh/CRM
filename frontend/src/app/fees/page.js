@@ -6,7 +6,7 @@ import {
   Search, TrendingUp, ArrowUpRight, ArrowDownRight,
   Pencil, Loader2, CircleDollarSign, Wallet, Check, X
 } from "lucide-react";
-import api from "@/lib/api";
+import { getFeesSummary, updateClientFee } from "@/lib/db/fees";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -51,8 +51,8 @@ export default function FeesPage() {
   const fetchFees = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await api.get("/fees/summary", { params: { search: debouncedSearch } });
-      setClients(res.data.data.clients || []);
+      const data = await getFeesSummary({ search: debouncedSearch });
+      setClients(data || []);
     } catch {
       setClients([]);
     } finally {
@@ -83,7 +83,7 @@ export default function FeesPage() {
     if (!editClient) return;
     setSubmitting(true);
     try {
-      await api.patch(`/fees/client/${editClient.id}`, { annual_fee: parseFloat(feeInput) || 0 });
+      await updateClientFee(editClient.id, parseFloat(feeInput) || 0);
       setEditOpen(false);
       fetchFees();
     } catch {

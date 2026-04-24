@@ -7,7 +7,9 @@ import {
   Trash2, Edit2, CalendarDays, User,
   MoreVertical, CheckCircle2, Clock, AlertCircle, Loader2
 } from "lucide-react";
-import api from "@/lib/api";
+import { getTasks, createTask, updateTask, deleteTask } from "@/lib/db/tasks";
+import { getClients } from "@/lib/db/clients";
+import { getTeamMembers } from "@/lib/db/team";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -75,14 +77,14 @@ export default function TasksPage() {
   const fetchInitialData = async () => {
     setLoading(true);
     try {
-      const [taskRes, clientRes, teamRes] = await Promise.all([
-        api.get('/tasks'),
-        api.get('/clients?limit=100'),
-        api.get('/team')
+      const [tasks, clients, team] = await Promise.all([
+        getTasks(),
+        getClients(),
+        getTeamMembers(),
       ]);
-      setTasks(taskRes.data.data.tasks || []);
-      setClients(clientRes.data.data.clients || []);
-      setTeam(teamRes.data.data.members || []);
+      setTasks(tasks);
+      setClients(clients);
+      setTeam(team);
     } catch (err) {
       console.error("Task fetch error:", err);
       toast({
@@ -105,10 +107,10 @@ export default function TasksPage() {
         assigned_to: formData.assigned_to || null,
       };
       if (editingTask) {
-        await api.patch(`/tasks/${editingTask.id}`, payload);
+        await updateTask(editingTask.id, payload);
         toast({ title: "Updated", description: "Task synchronised successfully." });
       } else {
-        await api.post('/tasks', payload);
+        await createTask(payload);
         toast({ title: "Created", description: "New task assigned." });
       }
       setIsModalOpen(false);
@@ -129,7 +131,7 @@ export default function TasksPage() {
   const handleDelete = async () => {
     if (!taskToDelete) return;
     try {
-      await api.delete(`/tasks/${taskToDelete}`);
+      await deleteTask(taskToDelete);
       setTasks(tasks.filter(t => t.id !== taskToDelete));
       window.dispatchEvent(new CustomEvent("refresh-counts"));
       setIsDeleteModalOpen(false);

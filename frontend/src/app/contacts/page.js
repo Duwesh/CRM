@@ -7,7 +7,8 @@ import {
   Building2, Star, Trash2, Loader2,
   Users
 } from "lucide-react";
-import api from "@/lib/api";
+import { getContacts, createContact, updateContact, deleteContact } from "@/lib/db/contacts";
+import { getClients } from "@/lib/db/clients";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -99,15 +100,9 @@ export default function ContactsPage() {
   const fetchContacts = async () => {
     setLoading(true);
     try {
-      const res = await api.get('/contacts', {
-        params: {
-          page: currentPage,
-          limit: itemsPerPage,
-          search: search
-        }
-      });
-      setContacts(res.data.data.contacts || []);
-      setTotalRecords(res.data.data.total || 0);
+      const result = await getContacts({ page: currentPage, limit: itemsPerPage, search });
+      setContacts(result.contacts);
+      setTotalRecords(result.total);
     } catch (err) {
       console.error("Failed to fetch contacts", err);
     } finally {
@@ -117,8 +112,8 @@ export default function ContactsPage() {
 
   const fetchClients = async () => {
     try {
-      const res = await api.get('/clients', { params: { limit: 1000 } });
-      setClients(res.data.data.clients || []);
+      const clients = await getClients();
+      setClients(clients);
     } catch (err) {
       console.error("Failed to fetch clients", err);
     }
@@ -128,11 +123,11 @@ export default function ContactsPage() {
     setSaving(true);
     try {
       if (editingContact) {
-        await api.patch(`/contacts/${editingContact.id}`, values);
+        await updateContact(editingContact.id, values);
       } else {
-        await api.post("/contacts", values);
+        await createContact(values);
       }
-      
+
       setIsAddModalOpen(false);
       setEditingContact(null);
       form.reset();
@@ -145,7 +140,7 @@ export default function ContactsPage() {
     } catch (err) {
       toast({
         title: "Error",
-        description: err.response?.data?.message || "Failed to save contact record.",
+        description: err.message || "Failed to save contact record.",
         variant: "destructive",
       });
     } finally {
@@ -197,7 +192,7 @@ export default function ContactsPage() {
     
     setSaving(true);
     try {
-      await api.delete(`/contacts/${contactToDelete.id}`);
+      await deleteContact(contactToDelete.id);
       setIsDeleteModalOpen(false);
       setContactToDelete(null);
       fetchContacts();

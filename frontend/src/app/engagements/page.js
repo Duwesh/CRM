@@ -7,7 +7,9 @@ import {
   Trash2, Edit2, CalendarDays, User,
   MoreVertical, CheckCircle2, Clock, AlertCircle
 } from "lucide-react";
-import api from "@/lib/api";
+import { getEngagements, createEngagement, updateEngagement, deleteEngagement } from "@/lib/db/engagements";
+import { getClients } from "@/lib/db/clients";
+import { getTeamMembers } from "@/lib/db/team";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -69,14 +71,14 @@ export default function EngagementsPage() {
   const fetchInitialData = async () => {
     setLoading(true);
     try {
-      const [engRes, clientRes, teamRes] = await Promise.all([
-        api.get('/engagements'),
-        api.get('/clients?limit=100'),
-        api.get('/team')
+      const [engagements, clients, team] = await Promise.all([
+        getEngagements(),
+        getClients(),
+        getTeamMembers(),
       ]);
-      setEngagements(engRes.data.data.engagements || []);
-      setClients(clientRes.data.data.clients || []);
-      setTeam(teamRes.data.data.members || []);
+      setEngagements(engagements);
+      setClients(clients);
+      setTeam(team);
     } catch (err) {
       console.error("Engagement data fetch error:", err);
       toast({
@@ -93,10 +95,10 @@ export default function EngagementsPage() {
     e.preventDefault();
     try {
       if (editingEngagement) {
-        await api.patch(`/engagements/${editingEngagement.id}`, formData);
+        await updateEngagement(editingEngagement.id, formData);
         toast({ title: "Success", description: "Engagement updated successfully." });
       } else {
-        await api.post('/engagements', formData);
+        await createEngagement(formData);
         toast({ title: "Success", description: "New engagement created." });
       }
       setIsModalOpen(false);
@@ -106,7 +108,7 @@ export default function EngagementsPage() {
     } catch (err) {
       toast({
         title: "Error",
-        description: err.response?.data?.message || "Failed to save engagement.",
+        description: err.message || "Failed to save engagement.",
         variant: "destructive"
       });
     }
@@ -115,7 +117,7 @@ export default function EngagementsPage() {
   const handleDelete = async () => {
     if (!engagementToDelete) return;
     try {
-      await api.delete(`/engagements/${engagementToDelete}`);
+      await deleteEngagement(engagementToDelete);
       setEngagements(engagements.filter(e => e.id !== engagementToDelete));
       window.dispatchEvent(new CustomEvent("refresh-counts"));
       setIsDeleteModalOpen(false);

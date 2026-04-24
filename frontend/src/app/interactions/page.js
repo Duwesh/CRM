@@ -6,7 +6,9 @@ import {
   MessageSquare, Search, Plus, Edit2, Trash2,
   Phone, Mail, Video, Users, FileText, ChevronDown,
 } from "lucide-react";
-import api from "@/lib/api";
+import { getInteractions, createInteraction, updateInteraction, deleteInteraction } from "@/lib/db/interactions";
+import { getClients } from "@/lib/db/clients";
+import { getTeamMembers } from "@/lib/db/team";
 import { INTERACTION_TYPES, INTERACTION_TYPE_VARIANTS } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -87,10 +89,8 @@ export default function InteractionsPage() {
   const fetchInteractions = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await api.get("/interactions", {
-        params: { page: currentPage, limit: itemsPerPage },
-      });
-      setInteractions(res.data.data.interactions || []);
+      const interactions = await getInteractions();
+      setInteractions(interactions);
       setTotal(res.data.data.total || 0);
     } catch {
       setInteractions([]);
@@ -102,12 +102,9 @@ export default function InteractionsPage() {
 
   const fetchMeta = async () => {
     try {
-      const [cl, tm] = await Promise.all([
-        api.get("/clients", { params: { limit: 200 } }),
-        api.get("/team"),
-      ]);
-      setClients(cl.data.data.clients || []);
-      setTeamMembers(tm.data.data.members || []);
+      const [clients, team] = await Promise.all([getClients(), getTeamMembers()]);
+      setClients(clients);
+      setTeamMembers(team);
     } catch {
       /* meta fetch is non-critical */
     }
@@ -157,10 +154,10 @@ export default function InteractionsPage() {
         action_required: values.action_required || null,
       };
       if (editingItem) {
-        await api.put(`/interactions/${editingItem.id}`, payload);
+        await updateInteraction(editingItem.id, payload);
         toast({ title: "Interaction updated" });
       } else {
-        await api.post("/interactions", payload);
+        await createInteraction(payload);
         toast({ title: "Interaction logged" });
       }
       setIsFormOpen(false);
@@ -176,7 +173,7 @@ export default function InteractionsPage() {
   const confirmDelete = async () => {
     if (!deletingItem) return;
     try {
-      await api.delete(`/interactions/${deletingItem.id}`);
+      await deleteInteraction(deletingItem.id);
       toast({ title: "Interaction deleted" });
       setIsDeleteOpen(false);
       setDeletingItem(null);

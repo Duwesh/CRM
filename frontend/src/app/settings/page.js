@@ -5,7 +5,7 @@ import Shell from "@/components/Shell";
 import { Building2, Palette, Save, Loader2 } from "lucide-react";
 // import { User, Shield, Bell, Globe } from "lucide-react"; // reserved for future tabs
 
-import api from "@/lib/api";
+import { getFirmProfile, updateFirmProfile, uploadFirmLogo } from "@/lib/db/settings";
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("firm");
@@ -31,9 +31,8 @@ export default function SettingsPage() {
   React.useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await api.get('/settings/profile');
-        if (res.data.data) {
-          const d = res.data.data;
+        const d = await getFirmProfile();
+        if (d) {
           setFormData({
             name: d.name || "",
             reg_number: d.reg_number || "",
@@ -61,7 +60,7 @@ export default function SettingsPage() {
   const handleSave = async () => {
     setLoading(true);
     try {
-      await api.put('/settings/profile', formData);
+      await updateFirmProfile(formData);
       alert("Settings updated successfully!");
     } catch (err) {
       console.error("Failed to update profile:", err);
@@ -75,15 +74,10 @@ export default function SettingsPage() {
     const file = e.target.files[0];
     if (!file) return;
 
-    const uploadData = new FormData();
-    uploadData.append('logo', file);
-
     setLoading(true);
     try {
-      const res = await api.post('/settings/upload-logo', uploadData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      setFormData(prev => ({ ...prev, logo_url: res.data.data.logo_url }));
+      const { logo_url } = await uploadFirmLogo(file);
+      setFormData(prev => ({ ...prev, logo_url }));
       alert("Logo uploaded successfully!");
     } catch (err) {
       console.error("Logo upload failed:", err);

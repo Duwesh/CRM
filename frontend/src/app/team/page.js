@@ -7,7 +7,7 @@ import {
   Trash2, Edit2, ShieldCheck, 
   MoreVertical, User, Briefcase, Phone
 } from "lucide-react";
-import api from "@/lib/api";
+import { getTeamMembers, createTeamMember, updateTeamMember, deleteTeamMember } from "@/lib/db/team";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -59,8 +59,8 @@ export default function TeamPage() {
   const fetchMembers = async () => {
     setLoading(true);
     try {
-      const res = await api.get('/team');
-      setMembers(res.data.data.members || []);
+      const data = await getTeamMembers();
+      setMembers(data || []);
     } catch (err) {
       console.error("Team fetch error:", err);
     } finally {
@@ -72,10 +72,10 @@ export default function TeamPage() {
     e.preventDefault();
     try {
       if (editingMember) {
-        await api.patch(`/team/${editingMember.id}`, formData);
+        await updateTeamMember(editingMember.id, formData);
         toast({ title: "Success", description: "Team member updated." });
       } else {
-        await api.post('/team', formData);
+        await createTeamMember(formData);
         toast({ title: "Success", description: "Team member invited." });
       }
       setIsModalOpen(false);
@@ -84,7 +84,7 @@ export default function TeamPage() {
     } catch (err) {
       toast({
         title: "Error",
-        description: err.response?.data?.message || "Failed to save member.",
+        description: err.message || "Failed to save member.",
         variant: "destructive"
       });
     }
@@ -98,7 +98,7 @@ export default function TeamPage() {
   const confirmDelete = async () => {
     if (!memberToDelete) return;
     try {
-      await api.delete(`/team/${memberToDelete.id}`);
+      await deleteTeamMember(memberToDelete.id);
       setMembers(members.filter(m => m.id !== memberToDelete.id));
       setIsDeleteModalOpen(false);
       setMemberToDelete(null);

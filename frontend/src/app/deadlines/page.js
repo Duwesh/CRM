@@ -8,7 +8,8 @@ import {
   MoreVertical, CheckCircle2, Clock, AlertTriangle,
   FileCheck2, Timer, CalendarX2
 } from "lucide-react";
-import api from "@/lib/api";
+import { getDeadlines, createDeadline, updateDeadline, deleteDeadline } from "@/lib/db/deadlines";
+import { getClients } from "@/lib/db/clients";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -64,12 +65,12 @@ export default function DeadlinesPage() {
   const fetchInitialData = async () => {
     setLoading(true);
     try {
-      const [deadRes, clientRes] = await Promise.all([
-        api.get('/deadlines'),
-        api.get('/clients?limit=100')
+      const [deadlines, clients] = await Promise.all([
+        getDeadlines(),
+        getClients(),
       ]);
-      setDeadlines(deadRes.data.data.deadlines || []);
-      setClients(clientRes.data.data.clients || []);
+      setDeadlines(deadlines);
+      setClients(clients);
     } catch (err) {
       console.error("Deadline fetch error:", err);
     } finally {
@@ -81,10 +82,10 @@ export default function DeadlinesPage() {
     e.preventDefault();
     try {
       if (editingDeadline) {
-        await api.patch(`/deadlines/${editingDeadline.id}`, formData);
+        await updateDeadline(editingDeadline.id, formData);
         toast({ title: "Updated", description: "Deadline adjusted." });
       } else {
-        await api.post('/deadlines', formData);
+        await createDeadline(formData);
         toast({ title: "Saved", description: "New compliance deadline set." });
       }
       setIsModalOpen(false);
@@ -94,7 +95,7 @@ export default function DeadlinesPage() {
     } catch (err) {
       toast({
         title: "Error",
-        description: err.response?.data?.message || "Failed to save deadline.",
+        description: err.message || "Failed to save deadline.",
         variant: "destructive"
       });
     }
@@ -103,7 +104,7 @@ export default function DeadlinesPage() {
   const handleDelete = async () => {
     if (!deadlineToDelete) return;
     try {
-      await api.delete(`/deadlines/${deadlineToDelete}`);
+      await deleteDeadline(deadlineToDelete);
       setDeadlines(deadlines.filter(d => d.id !== deadlineToDelete));
       window.dispatchEvent(new CustomEvent("refresh-counts"));
       setIsDeleteModalOpen(false);

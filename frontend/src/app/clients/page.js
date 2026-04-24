@@ -30,7 +30,8 @@ import {
   UserCheck,
 } from "lucide-react";
 import Modal from "@/components/Modal";
-import api from "@/lib/api";
+import { getClients, createClient, updateClient, deleteClient } from "@/lib/db/clients";
+import { getTeamMembers } from "@/lib/db/team";
 import clientsData from "@/data/clients.json";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -160,10 +161,8 @@ export default function ClientsPage() {
   const fetchClients = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/clients", {
-        params: { limit: 1000, search: search },
-      });
-      setClients(res.data.data.clients || []);
+      const clients = await getClients({ search });
+      setClients(clients);
     } catch (err) {
       setClients(clientsData);
     } finally {
@@ -173,8 +172,8 @@ export default function ClientsPage() {
 
   const fetchTeam = async () => {
     try {
-      const res = await api.get("/team");
-      setTeamMembers(res.data.data.members || []);
+      const members = await getTeamMembers();
+      setTeamMembers(members);
     } catch (err) {
       console.error("Team fetch failed", err);
     }
@@ -194,9 +193,9 @@ export default function ClientsPage() {
 
     try {
       if (editingClient) {
-        await api.patch(`/clients/${editingClient.id}`, data);
+        await updateClient(editingClient.id, data);
       } else {
-        await api.post("/clients", data);
+        await createClient(data);
       }
 
       setIsAddModalOpen(false);
@@ -213,9 +212,7 @@ export default function ClientsPage() {
     } catch (err) {
       toast({
         title: "Error",
-        description:
-          err.response?.data?.message ||
-          `Failed to ${editingClient ? "update" : "save"} client record.`,
+        description: err.message || `Failed to ${editingClient ? "update" : "save"} client record.`,
         variant: "destructive",
       });
     } finally {
@@ -287,7 +284,7 @@ export default function ClientsPage() {
 
     setSaving(true);
     try {
-      await api.delete(`/clients/${clientToDelete.id}`);
+      await deleteClient(clientToDelete.id);
       setIsDeleteModalOpen(false);
       setClientToDelete(null);
       fetchClients();
@@ -299,7 +296,7 @@ export default function ClientsPage() {
     } catch (err) {
       toast({
         title: "Delete Failed",
-        description: err.response?.data?.message || "Failed to delete record.",
+        description: err.message || "Failed to delete record.",
         variant: "destructive",
       });
     } finally {

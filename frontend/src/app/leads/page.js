@@ -58,7 +58,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import api from "@/lib/api";
+import { getLeads, createLead, updateLead, deleteLead } from "@/lib/db/leads";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -116,8 +116,8 @@ export default function LeadsPage() {
   const fetchLeads = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/leads", { params: { limit: 100 } });
-      setLeads(res.data.data.leads || []);
+      const leads = await getLeads();
+      setLeads(leads);
     } catch (err) {
       console.error("Failed to fetch leads", err);
       toast({
@@ -140,10 +140,10 @@ export default function LeadsPage() {
       };
 
       if (selectedLead) {
-        await api.patch(`/leads/${selectedLead.id}`, submissionData);
+        await updateLead(selectedLead.id, submissionData);
         toast({ title: "Success", description: "Lead updated successfully" });
       } else {
-        await api.post("/leads", submissionData);
+        await createLead(submissionData);
         toast({ title: "Success", description: "Lead created successfully" });
       }
       setIsModalOpen(false);
@@ -152,7 +152,7 @@ export default function LeadsPage() {
     } catch (err) {
       toast({
         title: "Error",
-        description: err.response?.data?.message || "Operation failed",
+        description: err.message || "Operation failed",
         variant: "destructive",
       });
     }
@@ -178,7 +178,7 @@ export default function LeadsPage() {
 
   const handleDelete = async () => {
     try {
-      await api.delete(`/leads/${selectedLead.id}`);
+      await deleteLead(selectedLead.id);
       toast({ title: "Success", description: "Lead deleted successfully" });
       setIsDeleteModalOpen(false);
       fetchLeads();
@@ -194,7 +194,7 @@ export default function LeadsPage() {
 
   const updateLeadStage = async (leadId, newStage) => {
     try {
-      await api.patch(`/leads/${leadId}`, { stage: newStage });
+      await updateLead(leadId, { stage: newStage });
       setLeads(prev => prev.map(l => l.id === leadId ? { ...l, stage: newStage } : l));
       window.dispatchEvent(new CustomEvent("refresh-counts"));
       toast({ title: "Stage Updated", description: `Lead moved to ${newStage}` });

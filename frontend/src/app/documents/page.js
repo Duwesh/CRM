@@ -7,7 +7,8 @@ import {
   MoreVertical, File, Trash2, Edit2,
   ExternalLink, Download, FileUp, Folder
 } from "lucide-react";
-import api from "@/lib/api";
+import { getDocuments, createDocument, updateDocument, deleteDocument } from "@/lib/db/documents";
+import { getClients } from "@/lib/db/clients";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -53,12 +54,9 @@ export default function DocumentsPage() {
   const fetchInitialData = async () => {
     setLoading(true);
     try {
-      const [docRes, clientRes] = await Promise.all([
-        api.get('/documents'),
-        api.get('/clients?limit=100')
-      ]);
-      setDocs(docRes.data.data.documents || []);
-      setClients(clientRes.data.data.clients || []);
+      const [docs, clients] = await Promise.all([getDocuments(), getClients()]);
+      setDocs(docs);
+      setClients(clients);
     } catch (err) {
       console.error("Document fetch error:", err);
     } finally {
@@ -70,10 +68,10 @@ export default function DocumentsPage() {
     e.preventDefault();
     try {
       if (editingDoc) {
-        await api.patch(`/documents/${editingDoc.id}`, formData);
+        await updateDocument(editingDoc.id, formData);
         toast({ title: "Updated", description: "Metadata saved." });
       } else {
-        await api.post('/documents', formData);
+        await createDocument(formData);
         toast({ title: "Logged", description: "Document record created." });
       }
       setIsModalOpen(false);
@@ -83,7 +81,7 @@ export default function DocumentsPage() {
     } catch (err) {
       toast({
         title: "Error",
-        description: err.response?.data?.message || "Failed to save document.",
+        description: err.message || "Failed to save document.",
         variant: "destructive"
       });
     }
@@ -92,7 +90,7 @@ export default function DocumentsPage() {
   const handleDelete = async () => {
     if (!documentToDelete) return;
     try {
-      await api.delete(`/documents/${documentToDelete}`);
+      await deleteDocument(documentToDelete);
       setDocs(docs.filter(d => d.id !== documentToDelete));
       window.dispatchEvent(new CustomEvent("refresh-counts"));
       setIsDeleteModalOpen(false);
