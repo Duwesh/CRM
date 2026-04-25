@@ -183,8 +183,8 @@ export default function ClientsPage() {
     setSaving(true);
     const data = { ...values };
 
-    // Add services as string for the main client table column (if backend expects it)
     data.services_availed = values.services.join(", ");
+    delete data.services;
 
     // Convert empty numeric-like strings to null if requested by backend
     if (data.manager_id === "") data.manager_id = null;
