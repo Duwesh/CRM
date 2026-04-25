@@ -105,6 +105,7 @@ export default function TasksPage() {
         ...formData,
         client_id: formData.client_id || null,
         assigned_to: formData.assigned_to || null,
+        due_date: formData.due_date || null,
       };
       if (editingTask) {
         await updateTask(editingTask.id, payload);
@@ -120,7 +121,7 @@ export default function TasksPage() {
     } catch (err) {
       toast({
         title: "Error",
-        description: "Failed to persist task state.",
+        description: err.message || "Failed to persist task state.",
         variant: "destructive"
       });
     } finally {
