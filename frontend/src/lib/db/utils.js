@@ -1,12 +1,8 @@
 import { supabase } from "@/lib/supabase";
 
 export async function getFirmId() {
-  const { data: { user } } = await supabase.auth.getUser();
-  const { data, error } = await supabase
-    .from("Tbl_Users")
-    .select("firm_id")
-    .eq("supabase_uid", user.id)
-    .single();
+  const { data, error } = await supabase.rpc("get_my_firm_id");
   if (error) throw error;
-  return data.firm_id;
+  if (!data) throw new Error("User record not found — signup may be incomplete");
+  return data;
 }
