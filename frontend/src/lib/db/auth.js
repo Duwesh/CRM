@@ -15,8 +15,10 @@ export async function getUserProfile() {
 }
 
 export async function signUp({ email, password, name, firmName }) {
-  const { error: signUpError } = await supabase.auth.signUp({ email, password });
+  const { data: signUpData, error: signUpError } = await supabase.auth.signUp({ email, password });
   if (signUpError) throw signUpError;
+
+  const uid = signUpData?.user?.id;
 
   // Use SECURITY DEFINER RPC — bypasses RLS so we can insert Tbl_Firms
   // before Tbl_Users exists (get_my_firm_id() would return NULL otherwise).
@@ -25,7 +27,21 @@ export async function signUp({ email, password, name, firmName }) {
     p_firm_email: email,
     p_user_name: name,
   });
-  if (error) throw error;
+
+  if (error) {
+    // RPC failed — clean up the orphaned Supabase Auth user so the email
+    // can be reused on the next attempt.
+    if (uid) {
+      try {
+        await supabase.functions.invoke('cleanup-orphan-user', {
+          body: { uid },
+        });
+      } catch (_) {
+        // cleanup failure is non-fatal — surface the original error
+      }
+    }
+    throw error;
+  }
 }
 
 export async function completeFirmSetup({ firmName }) {
