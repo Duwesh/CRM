@@ -121,11 +121,13 @@ export default function ContactsPage() {
 
   const onSubmit = async (values) => {
     setSaving(true);
+    const data = { ...values };
+    if (!data.birthday) data.birthday = null;
     try {
       if (editingContact) {
-        await updateContact(editingContact.id, values);
+        await updateContact(editingContact.id, data);
       } else {
-        await createContact(values);
+        await createContact(data);
       }
 
       setIsAddModalOpen(false);
