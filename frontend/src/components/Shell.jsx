@@ -189,18 +189,18 @@ export default function Shell({ children }) {
       >
         <div className="grid grid-cols-2 gap-4">
           {[
-            "Client",
-            "Task",
-            "Lead",
-            "Engagement",
-            "Invoice",
-            "Contact",
-            "Deadline",
-          ].map((item) => (
+            { label: "Client",     href: "/clients"     },
+            { label: "Task",       href: "/tasks"       },
+            { label: "Lead",       href: "/leads"       },
+            { label: "Engagement", href: "/engagements" },
+            { label: "Invoice",    href: "/invoices"    },
+            { label: "Contact",    href: "/contacts"    },
+            { label: "Deadline",   href: "/deadlines"   },
+          ].map(({ label: item, href }) => (
             <button
               key={item}
               className="p-5 bg-navy-3/50 border border-border rounded-xl text-left hover:border-gold-border group transition-all"
-              onClick={() => setIsQuickAddOpen(false)}
+              onClick={() => { setIsQuickAddOpen(false); router.push(href); }}
             >
               <div className="text-gold group-hover:scale-110 transition-transform mb-2">
                 {item === "Client" && <Users size={20} />}

@@ -93,12 +93,17 @@ export default function EngagementsPage() {
 
   const handleCreateOrUpdate = async (e) => {
     e.preventDefault();
+    const payload = { ...formData };
+    if (!payload.client_id) payload.client_id = null;
+    if (!payload.assigned_to) payload.assigned_to = null;
+    if (!payload.deadline) payload.deadline = null;
+    if (!payload.fees) payload.fees = null;
     try {
       if (editingEngagement) {
-        await updateEngagement(editingEngagement.id, formData);
+        await updateEngagement(editingEngagement.id, payload);
         toast({ title: "Success", description: "Engagement updated successfully." });
       } else {
-        await createEngagement(formData);
+        await createEngagement(payload);
         toast({ title: "Success", description: "New engagement created." });
       }
       setIsModalOpen(false);
