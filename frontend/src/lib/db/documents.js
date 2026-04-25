@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { getFirmId } from "./utils";
 
 export async function getDocuments() {
   const [{ data: documents, error }, { data: clients }] = await Promise.all([
@@ -15,9 +16,10 @@ export async function getDocuments() {
 }
 
 export async function createDocument(payload) {
+  const firm_id = await getFirmId();
   const { data, error } = await supabase
     .from("Tbl_Documents")
-    .insert(payload)
+    .insert({ ...payload, firm_id })
     .select()
     .single();
   if (error) throw error;
