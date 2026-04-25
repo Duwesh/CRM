@@ -91,10 +91,10 @@ export default function InteractionsPage() {
     try {
       const interactions = await getInteractions();
       setInteractions(interactions);
-      setTotal(res.data.data.total || 0);
-    } catch {
+      setTotal(interactions.length);
+    } catch (err) {
       setInteractions([]);
-      toast({ title: "Could not load interactions", variant: "destructive" });
+      toast({ title: "Could not load interactions", description: err.message, variant: "destructive" });
     } finally {
       setTimeout(() => setLoading(false), 300);
     }
