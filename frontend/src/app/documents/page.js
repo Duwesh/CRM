@@ -66,12 +66,14 @@ export default function DocumentsPage() {
 
   const handleCreateOrUpdate = async (e) => {
     e.preventDefault();
+    const { url, ...rest } = formData;
+    const payload = { ...rest, file_url: url, client_id: rest.client_id || null };
     try {
       if (editingDoc) {
-        await updateDocument(editingDoc.id, formData);
+        await updateDocument(editingDoc.id, payload);
         toast({ title: "Updated", description: "Metadata saved." });
       } else {
-        await createDocument(formData);
+        await createDocument(payload);
         toast({ title: "Logged", description: "Document record created." });
       }
       setIsModalOpen(false);
@@ -123,7 +125,7 @@ export default function DocumentsPage() {
       client_id: d.client_id?.toString() || "",
       category: d.category || "General",
       file_type: d.file_type || "pdf",
-      url: d.url || ""
+      url: d.file_url || d.url || ""
     });
     setIsModalOpen(true);
   };
@@ -229,7 +231,7 @@ export default function DocumentsPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="bg-slate-900 border-white/10 text-slate-200">
-                             <DropdownMenuItem onClick={() => window.open(d.url, '_blank')} className="gap-2 cursor-pointer hover:bg-slate-800 transition-all">
+                             <DropdownMenuItem onClick={() => window.open(d.file_url || d.url, '_blank')} className="gap-2 cursor-pointer hover:bg-slate-800 transition-all">
                               <ExternalLink className="w-3.5 h-3.5" /> Open
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => openEditModal(d)} className="gap-2 cursor-pointer hover:bg-slate-800 transition-all">
