@@ -77,7 +77,7 @@ export default function Shell({ children }) {
         .from("Tbl_Users")
         .select("name, role, Tbl_Firms(name)")
         .eq("supabase_uid", user.id)
-        .single();
+        .maybeSingle();
       if (data) {
         setUserInfo({
           user: { name: data.name, role: data.role },
