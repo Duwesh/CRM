@@ -80,12 +80,17 @@ export default function DeadlinesPage() {
 
   const handleCreateOrUpdate = async (e) => {
     e.preventDefault();
+    const payload = {
+      ...formData,
+      client_id: formData.client_id || null,
+      due_date: formData.due_date || null,
+    };
     try {
       if (editingDeadline) {
-        await updateDeadline(editingDeadline.id, formData);
+        await updateDeadline(editingDeadline.id, payload);
         toast({ title: "Updated", description: "Deadline adjusted." });
       } else {
-        await createDeadline(formData);
+        await createDeadline(payload);
         toast({ title: "Saved", description: "New compliance deadline set." });
       }
       setIsModalOpen(false);
