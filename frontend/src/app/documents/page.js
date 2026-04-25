@@ -231,7 +231,11 @@ export default function DocumentsPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="bg-slate-900 border-white/10 text-slate-200">
-                             <DropdownMenuItem onClick={() => window.open(d.file_url || d.url, '_blank')} className="gap-2 cursor-pointer hover:bg-slate-800 transition-all">
+                             <DropdownMenuItem
+                                onClick={() => (d.file_url || d.url) && window.open(d.file_url || d.url, '_blank')}
+                                disabled={!d.file_url && !d.url}
+                                className="gap-2 cursor-pointer hover:bg-slate-800 transition-all"
+                              >
                               <ExternalLink className="w-3.5 h-3.5" /> Open
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => openEditModal(d)} className="gap-2 cursor-pointer hover:bg-slate-800 transition-all">
